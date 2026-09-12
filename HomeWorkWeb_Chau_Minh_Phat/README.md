@@ -1,135 +1,272 @@
-# BÀI TẬP WEB 04
+# BÀI TẬP WEB 05
 
-Dự án Bài tập Web 04 - Phát triển ứng dụng Web Java với Jakarta Servlet, JPA/Hibernate, SiteMesh Decorator 3 và Bootstrap 5.
-
----
-
-## Nội dung bài tập
-
-### Yêu cầu 1 - SiteMesh Decorator 3
-- Cấu hình SiteMesh Decorator 3 (`sitemesh:3.3.0-RC1` tương thích hoàn toàn Jakarta Servlet 6.0 và Tomcat 10.1).
-- Sử dụng 01 Bootstrap Template (Bootstrap 5.3.3 kết hợp Bootstrap Icons).
-- Tích hợp layout dùng chung (`/decorators/main.jsp`) với Navbar responsive, Footer và container chung cho toàn bộ các trang JSP trong hệ thống.
-- Cấu hình exclude các tài nguyên tĩnh (`/css/*`, `/js/*`, `/images/*`, `/uploads/*`).
-
-### Yêu cầu 2 - Validation Form
-- Bổ sung cả **Client-side validation** (Bootstrap 5 `.needs-validation` và `.invalid-feedback`) lẫn **Server-side validation** (kiểm tra định dạng, độ dài tối thiểu, uniqueness, ràng buộc logic, số tiền > 0, retain input khi lỗi).
-- Áp dụng trên toàn bộ các form:
-  - Register (Họ tên, username >= 3 ký tự, email regex, mật khẩu >= 6 ký tự, số điện thoại).
-  - Login (Không để trống tài khoản và mật khẩu, retain username).
-  - Verify OTP (Mã OTP gồm đúng 6 chữ số, kiểm tra hết hạn 5 phút).
-  - Forgot Password (Email hợp lệ và kiểm tra tồn tại).
-  - Reset Password (Mật khẩu mới >= 6 ký tự, xác nhận mật khẩu trùng khớp).
-  - Category (Tên danh mục không để trống, trim whitespace).
-  - Product (Tên sản phẩm, giá bán > 0, chọn danh mục hợp lệ).
-  - Profile (Họ tên không để trống, số điện thoại 10-11 số, avatar hợp lệ).
-
-### Yêu cầu 3 - User Profile
-- Bổ sung thông tin người dùng: `fullname`, `phone`, `images`.
-- **Cập nhật Profile bằng JPA**: Sử dụng `EntityManager` với transaction quản lý rõ ràng (`begin`, `merge`, `commit`, `rollback`, `close`).
-- **Upload ảnh đại diện bằng Multipart**:
-  - Servlet sử dụng `@MultipartConfig`.
-  - Hỗ trợ định dạng: `image/jpeg`, `image/png`, `image/webp` (đuôi `.jpg`, `.jpeg`, `.png`, `.webp`).
-  - Giới hạn kích thước tệp tối đa 5MB.
-  - Đặt tên file ngẫu nhiên bằng `UUID` chống trùng lặp, chống path traversal, chống upload file thực thi.
-  - Lưu trữ tương đối trong thư mục `/uploads/profile/` trong webapp.
-  - Giữ lại ảnh cũ nếu người dùng không chọn tải ảnh mới.
-  - Tự động cập nhật lại thông tin đối tượng trong `HttpSession` (`account`).
-- Giao diện Profile xây dựng bằng SiteMesh + Bootstrap với preview ảnh trực tiếp và avatar mặc định nếu chưa có ảnh.
+Dự án **Bài tập Web 05** - Xây dựng hệ thống quản trị Web đa năng bằng **Spring Boot 4**, **Spring Data JPA**, **JSP/JSTL**, **SiteMesh Decorator 3** và **Bootstrap 5**.
 
 ---
 
-## Công nghệ sử dụng
+## 1. Yêu cầu bài tập
 
-- **Ngôn ngữ**: Java 26
-- **Web Layer**: Jakarta Servlet 6.0, JSP, JSTL (`jakarta.tags.core`)
-- **Quản lý dự án**: Apache Maven
-- **Web Server**: Apache Tomcat 10.1 (chạy cổng `8081`, context path `/Exercise`)
+Hệ thống hoàn thiện đầy đủ các chức năng theo đề bài giảng viên:
+1. **CRUD Category bằng Spring Boot 4 + JSP/JSTL** cho role ADMIN (Thêm, Xem danh sách, Chỉnh sửa, Xóa an toàn chống lỗi ràng buộc khóa ngoại).
+2. **CRUD User bằng Spring Boot 4 + JSP/JSTL** cho role ADMIN (Thêm, Xem danh sách, Cập nhật thông tin, Khóa/Kích hoạt tài khoản, Phân quyền vai trò, Bảo mật mật khẩu, Chống tự xóa tài khoản đang đăng nhập).
+3. **Chức năng Tìm kiếm (Search)**: Tìm kiếm danh mục theo tên; Tìm kiếm người dùng đa trường (username, họ tên, email).
+4. **Chức năng Phân trang (Pagination)**: Sử dụng Spring Data `Pageable` và `Page<T>` (mặc định 5 mục/trang, điều hướng Trang trước, Trang sau, số trang, giữ nguyên từ khóa tìm kiếm khi chuyển trang).
+5. **Giao diện SiteMesh Decorator 3**: Tích hợp bộ lọc SiteMesh 3 (`sitemesh:3.3.0-RC1`) tương thích Jakarta Servlet, chia sẻ Navbar responsive, Menu quản trị, Footer và container chung.
+6. **Bootstrap Template**: Giao diện quản trị hiện đại, sạch sẽ, chuẩn Bootstrap 5.3.3 và Bootstrap Icons 1.11.3 (thẻ Card, bảng Table responsive, Badge trạng thái, Modal xác nhận xóa, Alert thông báo).
+7. **Phân quyền Role ADMIN**: Bảo vệ toàn bộ các URL `/admin` và `/admin/**` bằng Interceptor. Chặn người dùng chưa đăng nhập (redirect `/login`), chặn người dùng không có quyền admin (trả lỗi HTTP 403 Forbidden với giao diện thông báo riêng).
+
+---
+
+## 2. Công nghệ sử dụng
+
+- **Ngôn ngữ lập trình**: Java 26 (Oracle JDK 26)
+- **Framework Backend**: Spring Boot 4.0.0 (Spring Framework 7.0.1, Jakarta EE 11)
+- **Kiến trúc Web**: Spring MVC (`@Controller`, `@GetMapping`, `@PostMapping`, `Model`, `RedirectAttributes`)
+- **Tầng dữ liệu (ORM & Persistence)**: Spring Data JPA, Hibernate 7, SQL Server JDBC (`mssql-jdbc`)
+- **View Layer**: JSP (JavaServer Pages), JSTL (`jakarta.tags.core`), Jasper compiler (`tomcat-embed-jasper:11.0.14`)
+- **Decorator & Layout**: SiteMesh Decorator 3 (`org.sitemesh:sitemesh:3.3.0-RC1`)
+- **Giao diện Frontend**: Bootstrap 5.3.3 & Bootstrap Icons 1.11.3
+- **Quản lý dự án & Build**: Apache Maven 3.9.11
 - **Cơ sở dữ liệu**: Microsoft SQL Server 2022 (Database: `ExerciseWeb`)
-- **ORM / Persistence**: Hibernate / JPA (`persistence.xml`, `EntityManagerFactory`)
-- **Layout & Decorator**: SiteMesh 3 (`org.sitemesh:sitemesh:3.3.0-RC1`)
-- **Giao diện**: Bootstrap 5.3.3 & Bootstrap Icons 1.11.3
-- **Mail**: Jakarta Mail 2.0.1 (gửi OTP kích hoạt và đặt lại mật khẩu)
+- **Kiểm thử**: JUnit 5, Mockito, Spring Boot Test
 
 ---
 
-## Cơ sở dữ liệu (Database)
+## 3. Cấu trúc Project
 
-- **Database Name**: `ExerciseWeb`
-- **Tài khoản mặc định**: `sa` / `1504` (cấu hình trong `src/main/resources/META-INF/persistence.xml`).
-- **Các script SQL**:
-  1. `database.sql` (nếu khởi tạo mới cấu trúc ban đầu).
-  2. `database/update_user_otp.sql`: Bổ sung cột `otp` và `otp_expiry`.
-  3. `database/update_user_profile.sql`: Bổ sung cột `images NVARCHAR(500) NULL` cho bảng `Users`.
-
-> **Lưu ý**: Nhờ cấu hình `hibernate.hbm2ddl.auto = update`, Hibernate cũng sẽ tự động đồng bộ cấu trúc bảng `Users`, `Category`, và `Products` khi ứng dụng khởi chạy.
+```
+BaitapWeb05/
+├── .gitignore
+├── README.md
+└── HomeWorkWeb_Chau_Minh_Phat/
+    ├── pom.xml
+    ├── README.md
+    ├── database/
+    │   ├── init_database_web05.sql       <-- Script khởi tạo toàn bộ CSDL và dữ liệu mẫu
+    │   ├── update_user_otp.sql
+    │   └── update_user_profile.sql
+    ├── src/
+    │   ├── main/
+    │   │   ├── java/vn/iotstar/
+    │   │   │   ├── BaitapWeb05Application.java     <-- Main class Spring Boot 4
+    │   │   │   ├── config/
+    │   │   │   │   ├── SiteMeshConfig.java         <-- Cấu hình SiteMesh 3 FilterRegistrationBean
+    │   │   │   │   └── WebMvcConfig.java           <-- Cấu hình Interceptor & Resource Handlers
+    │   │   │   ├── controller/
+    │   │   │   │   ├── admin/
+    │   │   │   │   │   ├── AdminCategoryController.java  <-- CRUD, Search & Pagination Category
+    │   │   │   │   │   ├── AdminDashboardController.java <-- Dashboard thống kê tổng quan
+    │   │   │   │   │   ├── AdminUserController.java      <-- CRUD, Search & Pagination User
+    │   │   │   │   │   └── ProductAdminController.java   <-- Quản lý sản phẩm role Admin
+    │   │   │   │   ├── AuthController.java               <-- Đăng nhập, ghi nhớ cookie, đăng xuất
+    │   │   │   │   ├── CustomErrorController.java        <-- Điều hướng trang lỗi 403, 404
+    │   │   │   │   ├── ForgotPasswordController.java     <-- Quên mật khẩu & xác thực OTP
+    │   │   │   │   ├── HomeController.java               <-- Trang chủ hiển thị 10 sp mới nhất
+    │   │   │   │   ├── ProductPublicController.java      <-- Xem danh sách & chi tiết sản phẩm
+    │   │   │   │   ├── ProfileController.java            <-- Hồ sơ cá nhân & upload ảnh đại diện
+    │   │   │   │   ├── RegisterController.java           <-- Đăng ký tài khoản mới & gửi OTP
+    │   │   │   │   └── VerifyOtpController.java          <-- Kích hoạt tài khoản bằng mã OTP
+    │   │   │   ├── entity/
+    │   │   │   │   ├── Category.java                 <-- Entity Category (@Table categories)
+    │   │   │   │   └── Product.java                  <-- Entity Product (@Table Products)
+    │   │   │   ├── model/
+    │   │   │   │   └── User.java                     <-- Entity User (@Table Users)
+    │   │   │   ├── interceptor/
+    │   │   │   │   └── AdminSecurityInterceptor.java <-- Kiểm tra phiên & quyền roleid == 1
+    │   │   │   ├── repository/
+    │   │   │   │   ├── CategoryRepository.java       <-- Spring Data JPA Category
+    │   │   │   │   ├── ProductRepository.java        <-- Spring Data JPA Product
+    │   │   │   │   └── UserRepository.java           <-- Spring Data JPA User
+    │   │   │   ├── service/
+    │   │   │   │   ├── ICategoryService.java & impl/CategoryServiceImpl.java
+    │   │   │   │   ├── IProductService.java & impl/ProductServiceImpl.java
+    │   │   │   │   └── UserService.java & impl/UserServiceImpl.java
+    │   │   │   └── util/
+    │   │   │       ├── EmailUtil.java                <-- Tiện ích gửi email Gmail SMTP
+    │   │   │       └── OtpUtil.java                  <-- Tiện ích sinh OTP ngẫu nhiên 6 chữ số
+    │   │   ├── resources/
+    │   │   │   ├── application.properties            <-- Cấu hình Spring Boot, Datasource, JPA, View
+    │   │   │   └── mail.properties.example           <-- File mẫu cấu hình Gmail App Password
+    │   │   └── webapp/
+    │   │       ├── WEB-INF/
+    │   │       │   ├── decorators/
+    │   │       │   │   └── main.jsp                  <-- Layout chung SiteMesh 3 + Bootstrap 5
+    │   │       │   ├── sitemesh3.xml                 <-- Cấu hình mapping & exclude SiteMesh 3
+    │   │       │   └── web.xml                       <-- Cấu hình webapp Jakarta Servlet
+    │   │       ├── views/
+    │   │       │   ├── admin/
+    │   │       │   │   ├── category/
+    │   │       │   │   │   ├── list.jsp              <-- Danh sách Category, tìm kiếm, phân trang
+    │   │       │   │   │   └── form.jsp              <-- Form Thêm/Sửa Category
+    │   │       │   │   ├── user/
+    │   │       │   │   │   ├── list.jsp              <-- Danh sách User, tìm kiếm, phân trang
+    │   │       │   │   │   └── form.jsp              <-- Form Thêm/Sửa User
+    │   │       │   │   └── dashboard.jsp             <-- Bảng điều khiển quản trị thống kê
+    │   │       │   ├── error/
+    │   │       │   │   ├── 403.jsp                   <-- Giao diện lỗi 403 Forbidden
+    │   │       │   │   └── 404.jsp                   <-- Giao diện lỗi 404 Not Found
+    │   │       │   ├── home.jsp, login.jsp, register.jsp, profile.jsp, ...
+    │   │       │   └── product/list.jsp, detail.jsp, admin-list.jsp, ...
+    │   └── test/java/vn/iotstar/
+    │       ├── AdminCategoryControllerTest.java      <-- Kiểm thử CRUD, Search, Pagination Category
+    │       ├── AdminSecurityInterceptorTest.java     <-- Kiểm thử phân quyền Role Admin
+    │       └── AdminUserControllerTest.java          <-- Kiểm thử CRUD, Search, Pagination User
+```
 
 ---
 
-## Cách chạy ứng dụng
+## 4. Cơ sở dữ liệu (Database)
 
-### 1. Build dự án với Maven
+- **Hệ quản trị CSDL**: Microsoft SQL Server 2019/2022
+- **Tên cơ sở dữ liệu**: `ExerciseWeb`
+- **Tài khoản kết nối mặc định**: `sa` / `1504` (có thể ghi đè linh hoạt qua biến môi trường `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`).
+- **File script khởi tạo CSDL**:
+  Đường dẫn: `HomeWorkWeb_Chau_Minh_Phat/database/init_database_web05.sql`
+  Script tạo sẵn:
+  - Bảng `Users` (chứa các trường `id`, `username`, `password`, `fullname`, `email`, `phone`, `roleid`, `active`, `otp`, `otp_expiry`, `images`).
+  - Bảng `categories` (chứa các trường `CategoryId`, `CategoryName`, `Images`, `Status`).
+  - Bảng `Products` (chứa các trường `ProductId`, `ProductName`, `Price`, `Description`, `Image`, `Status`, `CreatedAt`, `CategoryId`).
+  - Dữ liệu mẫu ban đầu cho đầy đủ các bảng.
+
+> **Lưu ý**: Cấu hình `spring.jpa.hibernate.ddl-auto=update` trong `application.properties` sẽ tự động cập nhật và đồng bộ cấu trúc bảng khi ứng dụng chạy.
+
+---
+
+## 5. Cách chạy ứng dụng
+
+### Cách 1: Chạy trực tiếp bằng Maven Spring Boot Plugin (Khuyên dùng khi dev)
+Mở terminal tại thư mục `HomeWorkWeb_Chau_Minh_Phat`:
+```bash
+mvn spring-boot:run
+```
+Ứng dụng sẽ khởi động trên cổng `8081` (truy cập: `http://localhost:8081/`).
+
+### Cách 2: Đóng gói và chạy file WAR thực thi
 ```bash
 mvn clean package -DskipTests
+java -jar target/Exercise.war
 ```
-Sau khi build thành công, file WAR `Exercise.war` sẽ được tạo tại thư mục `target/`.
 
-### 2. Cấu hình Tomcat
-- **Phiên bản Tomcat**: 10.1.x
-- **Port**: `8081` (cấu hình trong file `conf/server.xml` của Tomcat).
-- **Context Path**: `/Exercise`
-- Deploy file `Exercise.war` vào thư mục `webapps/` của Tomcat (hoặc cấu hình context trong Eclipse/IntelliJ).
-
-### 3. Cấu hình gửi mail OTP (Gmail SMTP)
-Để gửi mã OTP xác thực tài khoản và khôi phục mật khẩu, bạn có thể cấu hình thông tin xác thực theo một trong 3 cách sau (hệ thống tự động phát hiện theo thứ tự ưu tiên):
-
-- **Cách 1: Biến môi trường hệ thống (Khuyên dùng trong môi trường Production/Server)**
-  - `EMAIL_USERNAME`: Địa chỉ Gmail của bạn (VD: `example@gmail.com`).
-  - `EMAIL_PASSWORD`: Mật khẩu ứng dụng Google (App Password 16 ký tự, *không phải* mật khẩu tài khoản Google).
-  *(Lưu ý: Tài khoản Gmail phải bật **Xác minh 2 bước** (2-Step Verification) mới tạo được Mật khẩu ứng dụng).*
-
-- **Cách 2: Tham số JVM / VM Options trong Tomcat hoặc Eclipse / IntelliJ**
-  - Thêm tham số: `-DEMAIL_USERNAME=your_email@gmail.com -DEMAIL_PASSWORD=your_16_char_app_password`
-
-- **Cách 3: Cấu hình file cục bộ (Dành cho môi trường phát triển cục bộ)**
-  - Copy file `src/main/resources/mail.properties.example` thành `src/main/resources/mail.properties`.
-  - Điền thông tin `EMAIL_USERNAME` và `EMAIL_PASSWORD`.
-  - File `mail.properties` đã được thêm vào `.gitignore` để đảm bảo tuyệt đối không bị commit lên GitHub.
-
-- **Kiểm tra cấu hình nhanh qua dòng lệnh**:
-  ```bash
-  java -cp "target/classes;target/Exercise/WEB-INF/lib/*" vn.iotstar.util.EmailUtil
-  ```
+### Cách 3: Triển khai trên máy chủ Apache Tomcat 10.1+
+Copy file `target/Exercise.war` vào thư mục `webapps/` của Tomcat 10.1+ và khởi động Tomcat.
 
 ---
 
-## Các URL kiểm thử chính
+## 6. Tài khoản kiểm thử (Demo Test Accounts)
+
+| Tên đăng nhập (Username) | Mật khẩu (Password) | Họ và tên | Vai trò (Role) | Mô tả quyền hạn |
+| :--- | :--- | :--- | :--- | :--- |
+| **admin** | `123` | Quản Trị Viên Hệ Thống | **Quản trị viên (Role 1)** | Toàn quyền truy cập Dashboard, CRUD Category, CRUD User, CRUD Product |
+| **phatcm** | `123` | Châu Minh Phát | **Quản trị viên (Role 1)** | Tài khoản Admin bổ sung |
+| **manager** | `123` | Trần Thị Quản Lý | **Quản lý (Role 2)** | Không vào được `/admin`, chỉ dùng chức năng nội bộ |
+| **user** | `123` | Nguyễn Văn Người Dùng | **Người dùng (Role 3)** | Bị chặn khi vào `/admin` (hiển thị trang 403 Forbidden) |
+
+---
+
+## 7. Các URL kiểm thử chính
 
 | Chức năng | Đường dẫn (URL) | Mô tả |
-| --- | --- | --- |
-| **Trang chủ** | `http://localhost:8081/Exercise/home` | 10 sản phẩm mới nhất |
-| **Sản phẩm (Public)** | `http://localhost:8081/Exercise/product` | Danh sách sản phẩm phân trang (6 sp/trang) |
-| **Đăng nhập** | `http://localhost:8081/Exercise/login` | Đăng nhập tài khoản, ghi nhớ Cookie |
-| **Đăng ký** | `http://localhost:8081/Exercise/register` | Đăng ký tài khoản, gửi OTP |
-| **Xác thực OTP** | `http://localhost:8081/Exercise/verify-otp` | Nhập 6 số OTP kích hoạt tài khoản |
-| **Quên mật khẩu** | `http://localhost:8081/Exercise/forgot-password` | Yêu cầu OTP đặt lại mật khẩu |
-| **Xác thực OTP đổi pass** | `http://localhost:8081/Exercise/forgot-password/verify` | Xác thực OTP đặt lại mật khẩu |
-| **Đặt lại mật khẩu** | `http://localhost:8081/Exercise/reset-password` | Nhập mật khẩu mới |
-| **Hồ sơ cá nhân** | `http://localhost:8081/Exercise/profile` | Xem & sửa họ tên, SĐT, upload avatar |
-| **Admin Danh mục** | `http://localhost:8081/Exercise/admin/categories` | Quản lý Category bằng JPA |
-| **Admin Sản phẩm** | `http://localhost:8081/Exercise/admin/products` | Quản lý Product bằng JPA |
+| :--- | :--- | :--- |
+| **Trang chủ** | `http://localhost:8081/home` hoặc `/` | Hiển thị 10 sản phẩm mới nhất (yêu cầu đăng nhập) |
+| **Đăng nhập** | `http://localhost:8081/login` | Đăng nhập tài khoản, ghi nhớ cookie |
+| **Đăng ký** | `http://localhost:8081/register` | Đăng ký thành viên, gửi mã OTP kích hoạt |
+| **Xác thực OTP** | `http://localhost:8081/verify-otp` | Nhập mã 6 số kích hoạt tài khoản |
+| **Quên mật khẩu** | `http://localhost:8081/forgot-password` | Yêu cầu OTP đặt lại mật khẩu |
+| **Hồ sơ cá nhân** | `http://localhost:8081/profile` | Xem & sửa họ tên, SĐT, upload avatar Multipart |
+| **Admin Dashboard** | `http://localhost:8081/admin` | Bảng điều khiển thống kê tổng quan (Admin only) |
+| **Admin Danh mục** | `http://localhost:8081/admin/categories` | Danh sách danh mục, tìm kiếm & phân trang (Admin only) |
+| **Thêm danh mục** | `http://localhost:8081/admin/categories/create` | Form thêm danh mục có validation (Admin only) |
+| **Sửa danh mục** | `http://localhost:8081/admin/categories/edit/{id}` | Form sửa danh mục (Admin only) |
+| **Admin Người dùng** | `http://localhost:8081/admin/users` | Danh sách người dùng, tìm kiếm & phân trang (Admin only) |
+| **Thêm người dùng** | `http://localhost:8081/admin/users/create` | Form thêm người dùng có validation (Admin only) |
+| **Sửa người dùng** | `http://localhost:8081/admin/users/edit/{id}` | Form cập nhật thông tin người dùng (Admin only) |
+| **Admin Sản phẩm** | `http://localhost:8081/admin/products` | Quản lý sản phẩm (Admin only) |
+| **Sản phẩm Public** | `http://localhost:8081/product` | Danh sách sản phẩm phân trang cho khách hàng |
 
 ---
 
-## Lịch sử thực hiện & Quá trình commit
+## 8. Chi tiết chức năng Quản lý Danh mục (Category)
 
-Repository này được tổ chức lịch sử commit theo từng giai đoạn và yêu cầu thực tế của Bài tập 4:
-1. `Bài 4: Khởi tạo source từ bài tập 3`: Toàn bộ source baseline từ Bài tập 3 (Register, Login, OTP, Forgot Password, Category JPA, Product pagination).
-2. `Bài 4.1: Cấu hình SiteMesh Decorator 3`: Tích hợp SiteMesh 3 Jakarta, bộ lọc `web.xml`, file `sitemesh3.xml`.
-3. `Bài 4.1: Tích hợp giao diện Bootstrap bằng SiteMesh`: Layout chung Bootstrap 5, shared Navbar, Footer, container, làm sạch các trang JSP.
-4. `Bài 4.3: Bổ sung thông tin Profile cho User`: Bổ sung trường `images`, JPA Entity User, script migration SQL Server.
-5. `Bài 4.3: Cập nhật Profile User bằng JPA`: Xử lý DAO, Service, ProfileServlet, cập nhật session và giao diện `profile.jsp`.
-6. `Bài 4.3: Thêm upload ảnh Profile bằng Multipart`: `@MultipartConfig`, kiểm tra MIME, UUID filename, max 5MB, chống path traversal.
-7. `Bài 4.2: Bổ sung validation cho các Form`: Client-side và Server-side validation cho Register, Login, OTP, Forgot Password, Category, Product, Profile.
-8. `Bài 4: Kiểm thử và hoàn thiện các chức năng`: Kiểm tra toàn bộ luồng nghiệp vụ, build xác thực `BUILD SUCCESS`.
-9. `Bài 4: Cập nhật tài liệu và hướng dẫn chạy project`: Hoàn thiện `README.md`, `TASK.md`, `PROGRESS.md`.
+- **READ**: Xem danh sách toàn bộ danh mục, hiển thị mã, ảnh đại diện, tên danh mục, trạng thái hoạt động (Hoạt động / Tạm khóa).
+- **CREATE**:
+  - URL: `GET /admin/categories/create` & `POST /admin/categories/create`
+  - Validation: Tên danh mục không để trống, trim khoảng trắng, kiểm tra chống trùng tên danh mục trong CSDL.
+  - Retain dữ liệu đã nhập khi gặp lỗi.
+- **UPDATE**:
+  - URL: `GET /admin/categories/edit/{id}` & `POST /admin/categories/edit/{id}`
+  - Tải dữ liệu hiện tại lên form, kiểm tra không để trống tên, kiểm tra trùng lặp với danh mục khác.
+- **DELETE**:
+  - URL: `POST /admin/categories/delete/{id}`
+  - **Bảo toàn ràng buộc khóa ngoại (Foreign Key Integrity)**: Kiểm tra xem danh mục có sản phẩm (`Product`) đang liên kết hay không. Nếu có sản phẩm, hệ thống từ chối xóa và hiển thị thông báo lỗi rõ ràng: *"Không thể xóa danh mục vì đang có X sản phẩm thuộc danh mục này"*, không làm sập ứng dụng.
+  - Có modal Bootstrap xác nhận trước khi thực hiện xóa.
+
+---
+
+## 9. Chi tiết chức năng Quản lý Người dùng (User)
+
+- **READ**: Xem danh sách người dùng với đầy đủ thông tin: Mã, Ảnh đại diện/Avatar, Tên đăng nhập, Họ tên, Email, Số điện thoại, Badge vai trò (Quản trị viên / Quản lý / Người dùng), Badge trạng thái (Kích hoạt / Khóa).
+- **CREATE**:
+  - URL: `GET /admin/users/create` & `POST /admin/users/create`
+  - Validation:
+    * `username`: Bắt buộc, tối thiểu 3 ký tự, kiểm tra trùng lặp.
+    * `password`: Bắt buộc, tối thiểu 6 ký tự.
+    * `email`: Bắt buộc, kiểm tra định dạng email regex, kiểm tra trùng lặp.
+    * `phone`: Kiểm tra định dạng 10-11 số (nếu có nhập).
+    * `roleid`: Chọn vai trò hợp lệ (1: Admin, 2: Manager, 3: User).
+    * `active`: Switch kích hoạt hoặc tạm khóa tài khoản.
+- **UPDATE**:
+  - URL: `GET /admin/users/edit/{id}` & `POST /admin/users/edit/{id}`
+  - `username` hiển thị ở chế độ chỉ đọc (readonly) để bảo toàn định danh.
+  - **Bảo mật mật khẩu**: Không hiển thị mật khẩu plaintext. Nếu admin để trống ô *Mật khẩu mới*, hệ thống tự động giữ nguyên mật khẩu cũ của người dùng. Nếu nhập mật khẩu mới (tối thiểu 6 ký tự), hệ thống mới cập nhật.
+  - Cập nhật phiên làm việc (`HttpSession`) ngay lập tức nếu admin đang tự chỉnh sửa thông tin của chính mình.
+- **DELETE**:
+  - URL: `POST /admin/users/delete/{id}`
+  - **Chống tự khóa/tự xóa**: Kiểm tra đối chiếu ID với tài khoản đang đăng nhập trong Session. Nếu admin cố tình tự xóa chính mình, hệ thống lập tức chặn lại và báo lỗi: *"Bạn không thể tự xóa tài khoản quản trị đang đăng nhập của chính mình!"*.
+  - Modal Bootstrap cảnh báo và xác nhận trước khi xóa.
+
+---
+
+## 10. Tìm kiếm & Phân trang (Search & Pagination)
+
+### Danh mục (Category):
+- Tìm kiếm theo `categoryname` (không phân biệt hoa thường - Case-insensitive).
+- Nếu từ khóa trống -> hiển thị tất cả danh mục.
+- Phân trang chuẩn Spring Data `Pageable` (`Page<Category>`), mặc định 5 danh mục/trang.
+- Giữ nguyên tham số tìm kiếm `keyword` khi chuyển giữa các trang (ví dụ: `/admin/categories?keyword=máy&page=1&size=5`).
+
+### Người dùng (User):
+- Tìm kiếm một từ khóa trên nhiều trường đồng thời bằng truy vấn Spring Data JPA:
+  ```sql
+  LOWER(u.username) LIKE %:keyword% OR LOWER(u.fullname) LIKE %:keyword% OR LOWER(u.email) LIKE %:keyword%
+  ```
+- Phân trang chuẩn Spring Data `Pageable` (`Page<User>`), mặc định 5 người dùng/trang.
+- Thanh phân trang Bootstrap hiển thị nút *Trước*, danh sách số trang, nút *Sau*, vô hiệu hóa nút *Trước* ở trang đầu và nút *Sau* ở trang cuối.
+
+---
+
+## 11. SiteMesh Decorator 3 & Bootstrap Template
+
+- Bộ lọc SiteMesh 3 được đăng ký chuẩn trong Spring Boot 4 qua `FilterRegistrationBean<ConfigurableSiteMeshFilter>`.
+- Exclude các tài nguyên tĩnh: `/css/*`, `/js/*`, `/images/*`, `/assets/*`, `/uploads/*`.
+- Layout dùng chung tại `/WEB-INF/decorators/main.jsp`:
+  * Navbar Bootstrap 5 responsive kèm icon Bootstrap Icons.
+  * Tự động nhận diện session: Menu *Quản trị Admin* chỉ hiển thị khi tài khoản có `roleid == 1`.
+  * Huy hiệu (Badge) phân biệt vai trò Admin trên thanh điều hướng.
+  * Footer bản quyền đồng bộ trên toàn bộ hệ thống.
+  * Client-side validation `.needs-validation` tự động kích hoạt cho tất cả form HTML.
+
+---
+
+## 12. Kiểm thử tự động (Automated Unit Tests)
+
+Dự án bao gồm bộ kiểm thử đơn vị tự động (Unit Tests) toàn diện:
+- `AdminCategoryControllerTest`: 6 tests kiểm tra CRUD, validation tên rỗng, tìm kiếm, phân trang và chặn xóa danh mục có sản phẩm.
+- `AdminUserControllerTest`: 7 tests kiểm tra CRUD, validation username/email trùng, validation mật khẩu ngắn, tìm kiếm, phân trang và chặn admin tự xóa chính mình.
+- `AdminSecurityInterceptorTest`: 3 tests kiểm tra chặn truy cập chưa đăng nhập (redirect `/login`), chặn user thường (HTTP 403), và cho phép Admin hợp lệ.
+
+**Kết quả chạy lệnh `mvn test`:**
+```
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+```
+Tất cả 16/16 tests đều **PASS 100%**.
