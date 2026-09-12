@@ -1,0 +1,24 @@
+# ==============================================================================
+# CẤU HÌNH GỬI EMAIL OTP (GMAIL SMTP) - TEMPLATE MẪU
+# 
+# Các cách thiết lập theo thứ tự ưu tiên:
+#
+# Cách 1 (Eclipse Tomcat - VM Arguments - Khuyên dùng khi dev trong Eclipse):
+#   Mở Server tab -> Double-click Tomcat -> Open launch configuration -> Arguments -> VM arguments:
+#   -DEMAIL_USERNAME="your_email@gmail.com" -DEMAIL_PASSWORD="your_16_char_app_password"
+#
+# Cách 2 (Biến môi trường Windows / PowerShell):
+#   [System.Environment]::SetEnvironmentVariable('EMAIL_USERNAME', 'your_email@gmail.com', 'User')
+#   [System.Environment]::SetEnvironmentVariable('EMAIL_PASSWORD', 'your_16_char_app_password', 'User')
+#   (Code cũng hỗ trợ: MAIL_USERNAME, SMTP_USERNAME, MAIL_PASSWORD, SMTP_PASSWORD)
+#
+# Cách 3 (File nội bộ mail.properties - gitignored):
+#   Copy file này thành 'mail.properties' trong thư mục src/main/resources/ và điền:
+# ==============================================================================
+EMAIL_USERNAME=your_email@gmail.com
+EMAIL_PASSWORD=your_16_character_app_password
+
+# Tuỳ chọn nâng cao (Mặc định đã là Gmail):
+# SMTP_HOST=smtp.gmail.com
+# SMTP_PORT=587
+

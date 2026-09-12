@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemesh>
+    <!-- Thư mục gốc chứa decorator (mặc định của SiteMesh 3 là /WEB-INF/decorators/) -->
+    <decorator-prefix>/WEB-INF/decorators/</decorator-prefix>
+
+    <!-- Exclude static resources and API from decoration -->
+    <mapping path="/css/*" exclude="true"/>
+    <mapping path="/js/*" exclude="true"/>
+    <mapping path="/images/*" exclude="true"/>
+    <mapping path="/assets/*" exclude="true"/>
+    <mapping path="/uploads/*" exclude="true"/>
+
+    <!-- Map all web pages to the main decorator: resolves to /WEB-INF/decorators/main.jsp -->
+    <mapping path="/*" decorator="main.jsp"/>
+</sitemesh>
