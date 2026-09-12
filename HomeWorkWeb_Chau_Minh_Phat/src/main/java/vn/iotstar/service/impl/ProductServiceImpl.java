@@ -1,31 +1,30 @@
 package vn.iotstar.service.impl;
 
 import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import vn.iotstar.dao.IProductDao;
-import vn.iotstar.dao.impl.ProductDao;
 import vn.iotstar.entity.Product;
+import vn.iotstar.repository.ProductRepository;
 import vn.iotstar.service.IProductService;
 
+@Service
+@Transactional
 public class ProductServiceImpl implements IProductService {
 
-    private final IProductDao productDao = new ProductDao();
+    @Autowired
+    private ProductRepository productRepository;
 
     @Override
     public void insert(Product product) {
         if (product == null) {
             throw new IllegalArgumentException("Product cannot be null");
         }
-        if (product.getProductName() == null || product.getProductName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Product name cannot be empty");
-        }
-        if (product.getPrice() < 0) {
-            throw new IllegalArgumentException("Product price cannot be negative");
-        }
-        if (product.getCategory() == null) {
-            throw new IllegalArgumentException("Product category cannot be null");
-        }
-        productDao.insert(product);
+        productRepository.save(product);
     }
 
     @Override
@@ -33,50 +32,50 @@ public class ProductServiceImpl implements IProductService {
         if (product == null) {
             throw new IllegalArgumentException("Product cannot be null");
         }
-        if (product.getProductName() == null || product.getProductName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Product name cannot be empty");
-        }
-        if (product.getPrice() < 0) {
-            throw new IllegalArgumentException("Product price cannot be negative");
-        }
-        if (product.getCategory() == null) {
-            throw new IllegalArgumentException("Product category cannot be null");
-        }
-        productDao.update(product);
+        productRepository.save(product);
     }
 
     @Override
     public void delete(int id) {
-        productDao.delete(id);
+        productRepository.deleteById(id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Product findById(int id) {
-        return productDao.findById(id);
+        return productRepository.findById(id).orElse(null);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Product> findAll() {
-        return productDao.findAll();
+        return productRepository.findAll(Sort.by("productId").descending());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Product> findLatest(int limit) {
-        return productDao.findLatest(limit);
+        return productRepository.findTop10ByOrderByCreatedAtDesc();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Product> findAll(int page, int pageSize) {
-        return productDao.findAll(page, pageSize);
+        return productRepository.findAll(PageRequest.of(page, pageSize, Sort.by("productId").descending())).getContent();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public long count() {
-        return productDao.count();
+        return productRepository.count();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Product> searchByName(String keyword) {
-        return productDao.searchByName(keyword);
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return findAll();
+        }
+        return productRepository.findByProductNameContainingIgnoreCase(keyword.trim(), Pageable.unpaged()).getContent();
     }
 }
