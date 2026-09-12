@@ -150,4 +150,14 @@ public class User implements Serializable {
     public void setImages(String images) {
         this.images = images;
     }
+
+    public String getRoleName() {
+        if (roleid == 1) {
+            return "Quản trị viên";
+        } else if (roleid == 2) {
+            return "Quản lý";
+        } else {
+            return "Người dùng";
+        }
+    }
 }
