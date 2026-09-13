@@ -12,19 +12,7 @@
         <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
 
-    <!-- SiteMesh 3 Filter -->
-    <filter>
-        <filter-name>sitemesh</filter-name>
-        <filter-class>org.sitemesh.config.ConfigurableSiteMeshFilter</filter-class>
-        <init-param>
-            <param-name>configFile</param-name>
-            <param-value>/WEB-INF/sitemesh3.xml</param-value>
-        </init-param>
-    </filter>
-    <filter-mapping>
-        <filter-name>sitemesh</filter-name>
-        <url-pattern>/*</url-pattern>
-    </filter-mapping>
+
 
     <session-config>
         <tracking-mode>COOKIE</tracking-mode>

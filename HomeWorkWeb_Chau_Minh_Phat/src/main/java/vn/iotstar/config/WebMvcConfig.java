@@ -28,4 +28,17 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/assets/**").addResourceLocations("/assets/");
         registry.addResourceHandler("/uploads/**").addResourceLocations("/uploads/");
     }
+
+    @org.springframework.context.annotation.Bean
+    public org.springframework.boot.web.server.WebServerFactoryCustomizer<org.springframework.boot.web.server.servlet.ConfigurableServletWebServerFactory> webServerFactoryCustomizer() {
+        return factory -> {
+            java.io.File docBase = new java.io.File("src/main/webapp");
+            if (!docBase.exists()) {
+                docBase = new java.io.File("target/Exercise");
+            }
+            if (docBase.exists()) {
+                factory.setDocumentRoot(docBase);
+            }
+        };
+    }
 }

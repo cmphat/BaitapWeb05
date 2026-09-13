@@ -43,7 +43,7 @@ public class Product implements Serializable {
     private LocalDateTime createdAt;
 
     @ManyToOne
-    @JoinColumn(name = "CategoryId", nullable = false)
+    @JoinColumn(name = "CategoryId", referencedColumnName = "CategoryId", nullable = false)
     private Category category;
 
     public Product() {
